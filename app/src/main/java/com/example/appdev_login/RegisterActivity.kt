@@ -32,14 +32,15 @@ class RegisterActivity : AppCompatActivity() {
                     Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
                 databaseHelper.checkEmailExists(email) -> {
-                    Toast.makeText(this, "Email already exists", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Email already registered", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
-                    val result = databaseHelper.insertUser(username, email, password)
-                    if (result != -1L) {
-                        Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this, LoginActivity::class.java)
-                        startActivity(intent)
+                    // If no users exist yet, make the first registered account an admin
+                    val existing = databaseHelper.getAllUsers()
+                    val role = if (existing.isEmpty()) "admin" else "guest"
+                    val result = databaseHelper.insertUser(username, email, password, role)
+                    if (result > 0) {
+                        Toast.makeText(this, "Registration Successful (role: $role)", Toast.LENGTH_SHORT).show()
                         finish()
                     } else {
                         Toast.makeText(this, "Registration Failed", Toast.LENGTH_SHORT).show()

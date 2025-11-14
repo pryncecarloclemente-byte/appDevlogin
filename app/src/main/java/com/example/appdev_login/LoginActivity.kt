@@ -18,6 +18,13 @@ class LoginActivity : AppCompatActivity() {
 
         databaseHelper = DatabaseHelper(this)
 
+        // Optional debug: show how many users exist in DB and list emails (helps verify DB connection)
+        if (AppConfig.ENABLE_DB_DEBUG) {
+            val currentUsers = databaseHelper.getAllUsers()
+            val emails = currentUsers.joinToString { it.email }
+            Toast.makeText(this, "DB users: ${currentUsers.size} -> $emails", Toast.LENGTH_LONG).show()
+        }
+
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
@@ -25,9 +32,13 @@ class LoginActivity : AppCompatActivity() {
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
             } else {
-                if (databaseHelper.checkUser(email, password)) {
+                val user = databaseHelper.getUserByEmailAndPassword(email, password)
+                if (user != null) {
                     Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, DatabaseViewActivity::class.java)
+                    val intent = Intent(this, DatabaseViewActivity::class.java).apply {
+                        putExtra("currentUserId", user.id)
+                        putExtra("currentUserRole", user.role)
+                    }
                     startActivity(intent)
                     finish()
                 } else {
